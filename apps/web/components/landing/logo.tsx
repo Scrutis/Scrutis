@@ -1,4 +1,4 @@
-import { cn } from '@workspace/ui/lib/utils'
+import { cn } from '@scrutis/ui/lib/utils'
 
 export const Logo = ({ className, uniColor }: { className?: string; uniColor?: boolean }) => {
     return (

@@ -1,10 +1,10 @@
 import React from 'react'
 import Link from 'next/link'
 import { ArrowRight, ChevronRight } from 'lucide-react'
-import { Button } from '@workspace/ui/components/button'
+import { Button } from '@scrutis/ui/components/button'
 import Image from 'next/image'
-import { TextEffect } from '@workspace/ui/components/text-effect'
-import { AnimatedGroup } from '@workspace/ui/components/animated-group'
+import { TextEffect } from '@scrutis/ui/components/text-effect'
+import { AnimatedGroup } from '@scrutis/ui/components/animated-group'
 import { HeroHeader } from './header'
 import TeamSection from './team'
 

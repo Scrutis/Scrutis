@@ -2,9 +2,9 @@
 import Link from 'next/link'
 import { Logo } from '@/components/landing/logo'
 import { Menu, X } from 'lucide-react'
-import { Button } from '@workspace/ui/components/button'
+import { Button } from '@scrutis/ui/components/button'
 import React from 'react'
-import { cn } from '@workspace/ui/lib/utils'
+import { cn } from '@scrutis/ui/lib/utils'
 
 const menuItems = [
     { name: 'Features', href: '#link' },
