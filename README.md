@@ -1,3 +1,20 @@
+<img align="right" src="https://visitor-badge.laobi.icu/badge?page_id=Scrutis.Scrutis&right_color=%230078ff" />
+
+<h1 align="center">
+    <img src="https://readme-typing-svg.herokuapp.com/?font=Righteous&color=EEEEEE&size=35&center=true&vCenter=true&width=700&height=70&duration=4500&lines=🛡️+Scrutis+🛡️;Cloud-Native+Cybersecurity+Platform" />
+</h1>
+
+# About Us
+Scrutis is an open-source Platform-as-a-Service (PaaS) designed to bring automated malware analysis, real-time log monitoring, and SOC-as-a-Service capabilities to individuals, developers, and small organizations without the cost or complexity of traditional infrastructure.
+
+
+
+
+
+
+
+
+
 # shadcn/ui monorepo template
 
 This template is for creating a monorepo with shadcn/ui.
