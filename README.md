@@ -4,7 +4,7 @@
     <img src="https://readme-typing-svg.herokuapp.com/?font=Righteous&color=EEEEEE&size=35&center=true&vCenter=true&width=700&height=70&duration=4500&lines=🛡️+Scrutis+🛡️;Cloud-Native+Cybersecurity+Platform" />
 </h1>
 
-![](https://github.com/Scrutis/Scrutis/blob/main/our_team.png)
+
 
 # About Us
 Scrutis is an open-source Platform-as-a-Service (PaaS) designed to bring automated malware analysis, real-time log monitoring, and SOC-as-a-Service capabilities to individuals, developers, and small organizations without the cost or complexity of traditional infrastructure.
@@ -35,22 +35,6 @@ Users can:
 
 <br>
 
-# Technologies Used
-**`More details will be added to this section`**
-## Frontend
-[![Frontend](https://skillicons.dev/icons?i=ts,css&perline=6)](https://skillicons.dev)
-## Backend
-[![Backend](https://skillicons.dev/icons?i=js&perline=6)](https://skillicons.dev)
-## Malware Analysis
-## Logs & SIEM
-## DevOps
-## Cloud Infra
-[![Frontend](https://skillicons.dev/icons?i=aws&perline=6)](https://skillicons.dev)
-## Security
-## Automation
-![Automation](https://go-skill-icons.vercel.app/api/icons?i=slack,github&titles=true)
-
-<br>
 
 # Repository Structure
 **`More details will be added to this section`**
