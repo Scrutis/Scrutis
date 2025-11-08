@@ -18,6 +18,8 @@ Users can:
 - 📊 **View interactive dashboards** that visualize risk scores, alerts, and historical security data.  
 - 🧠 **Receive automated reports** with recommendations and alerts for critical incidents.
 
+<br>
+
 # Core Features
 **`More details will be added to this section`**
 ## 🔍 1. Malware Analysis
@@ -26,25 +28,57 @@ Users can:
 ## 🔄 4. DevOps Integration
 ## 🔐 5. Security & Sandbox Isolation
 
+<br>
+
 # System Architecture
 **`More details will be added to this section`**
+
+<br>
 
 # Technologies Used
 **`More details will be added to this section`**
 ## Frontend
-[![Frontend](https://skillicons.dev/icons?i=js,ts&perline=6)](https://skillicons.dev)
+[![Frontend](https://skillicons.dev/icons?i=ts,css&perline=6)](https://skillicons.dev)
 ## Backend
+[![Backend](https://skillicons.dev/icons?i=js&perline=6)](https://skillicons.dev)
 ## Malware Analysis
 ## Logs & SIEM
 ## DevOps
 ## Cloud Infra
+[![Frontend](https://skillicons.dev/icons?i=aws&perline=6)](https://skillicons.dev)
 ## Security
 ## Automation
+![Automation](https://go-skill-icons.vercel.app/api/icons?i=slack,github&titles=true)
+
+<br>
 
 # Repository Structure
 **`More details will be added to this section`**
 
+<br>
 
+# Getting Started (Developer Setup)
+**`More details will be added to this section`**
+## Prerequisites
+
+## Steps
+
+<br>
+
+# ⚖️ License
+
+This project is licensed under the **MIT License** — see [LICENSE](./LICENSE) for details.  
+This allows **free use, modification, and distribution** (commercial or academic) as long as the original **copyright and license notice** are included.
+
+# 💬 Contact
+
+For inquiries or collaboration, reach out to us at:  
+
+- 📧 **elmqiddem@gmail.com**  
+- 📧 **chanounih@gmail.com**  
+- 📧 **amellahmehdiog@gmail.com**
+
+<br><br><br>
 # shadcn/ui monorepo template
 
 This template is for creating a monorepo with shadcn/ui.
