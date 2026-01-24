@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer, jsonb } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -58,4 +58,54 @@ export const verification = pgTable("verification", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
+});
+
+export const project = pgTable("project", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const scan = pgTable("scan", {
+  id: text("id").primaryKey(),
+  projectId: text("project_id").references(() => project.id, { onDelete: "set null" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // "file" | "url"
+  target: text("target").notNull(), // filename or URL
+  status: text("status").notNull().default("pending"), // "pending" | "scanning" | "completed" | "failed"
+  severity: text("severity"), // "none" | "low" | "medium" | "high" | "critical"
+  result: text("result"), // "clean" | "infected" | "suspicious"
+  fileHash: text("file_hash"), // SHA256 hash for files
+  fileSize: integer("file_size"), // Size in bytes
+  metadata: jsonb("metadata"), // Additional scan metadata
+  errorMessage: text("error_message"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const scanResult = pgTable("scan_result", {
+  id: text("id").primaryKey(),
+  scanId: text("scan_id")
+    .notNull()
+    .references(() => scan.id, { onDelete: "cascade" }),
+  engine: text("engine").notNull(), // Scanner engine name (e.g., "clamav", "virustotal", "custom")
+  detected: boolean("detected").default(false).notNull(),
+  threatName: text("threat_name"), // Name of detected threat
+  severity: text("severity"), // "none" | "low" | "medium" | "high" | "critical"
+  details: jsonb("details"), // Engine-specific details
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });

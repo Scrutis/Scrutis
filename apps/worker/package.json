@@ -1,0 +1,29 @@
+{
+  "name": "worker",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@scrutis/db": "workspace:*",
+    "drizzle-orm": "^0.44.7",
+    "express": "^4.21.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "@scrutis/eslint-config": "workspace:^",
+    "@scrutis/typescript-config": "workspace:*",
+    "@types/express": "^5.0.0",
+    "@types/cors": "^2.8.17",
+    "@types/node": "^20.19.9",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.2"
+  }
+}

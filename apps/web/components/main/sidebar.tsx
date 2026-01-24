@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { NavUser } from "./nav-user";
 import { authClient } from "@/lib/auth-client";
-import { CreateProject } from "./create-project";
+import { CreateScan } from "./create-scan";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail } from "@scrutis/ui/components/sidebar";
 import { LogoIcon } from "../landing/logo";
 
@@ -79,7 +79,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             Scrutis
           </span>
         </div>
-        <CreateProject />
+        <CreateScan />
       </SidebarHeader>
       <SidebarContent>
         {/* We create a SidebarGroup for each parent. */}
