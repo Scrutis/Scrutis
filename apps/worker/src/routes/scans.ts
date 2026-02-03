@@ -1,13 +1,13 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { processScan, getScanStatus } from '../services/scanner.js';
 
-export const scanRoutes = Router();
+export const scanRoutes: Router = Router();
 
 // POST /api/scans/process/:id - Process a specific scan
-scanRoutes.post('/process/:id', async (req, res) => {
+scanRoutes.post('/process/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const result = await processScan(id);
+    const result = await processScan(id as string);
     
     if (!result) {
       return res.status(404).json({ error: 'Scan not found' });

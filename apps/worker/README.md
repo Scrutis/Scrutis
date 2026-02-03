@@ -26,6 +26,18 @@ cp .env.example .env
 - `PORT`: Worker API port (default: 3001)
 - `WORKER_POLL_INTERVAL`: Polling interval in ms (default: 5000)
 - `WORKER_BATCH_SIZE`: Max scans to process at once (default: 5)
+- `UPLOADS_DIR`: Absolute path to the uploads directory (default: `../web/uploads` from worker cwd)
+- `CLAMAV_DOCKER_IMAGE`: Docker image for ClamAV (preferred; falls back to `CLAMAV_PATH` if unset)
+- `CLAMAV_DOCKER_CMD`: Command inside ClamAV container (default: `clamscan --no-summary`)
+- `CLAMAV_PATH`: Path to `clamscan` binary (fallback if no docker image)
+- `YARA_DOCKER_IMAGE`: Docker image for YARA (preferred; falls back to `YARA_PATH` if unset)
+- `YARA_DOCKER_CMD`: Command inside YARA container (default: `yara -w`)
+- `YARA_PATH`: Path to `yara` binary (fallback if no docker image)
+- `YARA_RULES_PATH`: Absolute path to YARA rules file or directory (mounted to `/rules` in docker)
+- `SAFE_BROWSING_API_KEY`: Google Safe Browsing API key
+- `URLSCAN_API_KEY`: URLScan.io API key
+- `VIRUSTOTAL_API_KEY`: VirusTotal API key
+- `PHISHTANK_API_KEY`: PhishTank API key
 
 ## Development
 
@@ -68,7 +80,6 @@ The worker uses a polling mechanism to check for pending scans. When a scan is c
 
 ## Future Enhancements
 
-- Integration with actual scanning engines (ClamAV, VirusTotal, etc.)
 - Message queue support (RabbitMQ, Redis, etc.)
 - WebSocket updates for real-time status
 - Rate limiting and throttling

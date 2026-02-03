@@ -1,61 +1,65 @@
 import { db } from '@scrutis/db';
 import { scan, scanResult } from '@scrutis/db/src/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
+import { stat } from 'node:fs/promises';
+import type { EngineResult } from './scanners/types.js';
+import { runClamAV, runYara } from './scanners/file/index.js';
+import {
+  determineOverallResult,
+  getHighestSeverity,
+  normalizeFilePath,
+} from './scanners/utils.js';
+import { runPhishTank, runSafeBrowsing, runUrlScan, runVirusTotal } from './scanners/url/index.js';
 
 /**
  * Process a file scan
- * In production, this would integrate with actual scanning engines
- * (ClamAV, VirusTotal API, custom sandbox, etc.)
+ * TODO: Implement actual file scanning logic
  */
 async function processFileScan(scanData: typeof scan.$inferSelect) {
-  // TODO: Implement actual file scanning logic
-  // For now, simulate scanning with a delay
-  
-  // Simulate scanning delay (1-3 seconds)
-  await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
-  
-  // Simulate detection (20% chance of threat for demo)
-  const isThreat = Math.random() < 0.2;
-  
-  const engines = [
-    { name: 'clamav', detectionRate: 0.85 },
-    { name: 'virustotal', detectionRate: 0.95 },
-    { name: 'custom', detectionRate: 0.75 },
-  ];
-  
-  const results = [];
-  
-  for (const engine of engines) {
-    const detected = isThreat && Math.random() < engine.detectionRate;
-    
-    results.push({
-      id: randomUUID(),
-      scanId: scanData.id,
-      engine: engine.name,
-      detected,
-      threatName: detected ? 'Trojan.Generic' : null,
-      severity: detected ? (Math.random() < 0.5 ? 'high' : 'medium') : null,
-      details: {
-        engineVersion: '1.0.0',
-        scanDuration: Math.random() * 1000 + 500,
-        signatures: detected ? ['Trojan.Generic.12345'] : [],
-      },
-      createdAt: new Date(),
-    });
+  const metadata = (scanData.metadata || {}) as { filePath?: string };
+  if (!metadata.filePath) {
+    throw new Error('Missing filePath metadata for file scan');
   }
-  
-  // Determine overall result
-  const anyDetected = results.some(r => r.detected);
-  const overallResult = anyDetected ? 'infected' : 'clean';
-  const overallSeverity = anyDetected 
-    ? (results.find(r => r.detected)?.severity || 'medium')
-    : null;
-  
+
+  const filePath = normalizeFilePath(metadata.filePath);
+  await stat(filePath);
+
+  const engineResults: EngineResult[] = [];
+  const engines = [runClamAV, runYara];
+
+  for (const engine of engines) {
+    try {
+      engineResults.push(await engine(filePath));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      const engineName = engine === runClamAV ? 'clamav' : 'yara';
+      engineResults.push({
+        engine: engineName,
+        detected: false,
+        threatName: null,
+        severity: null,
+        details: { error: message },
+      });
+    }
+  }
+
+  const overallResult = determineOverallResult(engineResults);
+  const overallSeverity = getHighestSeverity(engineResults);
+
   return {
     result: overallResult,
     severity: overallSeverity,
-    results,
+    results: engineResults.map((result) => ({
+      id: randomUUID(),
+      scanId: scanData.id,
+      engine: result.engine,
+      detected: result.detected,
+      threatName: result.threatName,
+      severity: result.severity,
+      details: result.details,
+      createdAt: new Date(),
+    })),
   };
 }
 
@@ -64,54 +68,53 @@ async function processFileScan(scanData: typeof scan.$inferSelect) {
  * In production, this would check URL reputation, phishing databases, etc.
  */
 async function processURLScan(scanData: typeof scan.$inferSelect) {
-  // TODO: Implement actual URL scanning logic
-  // For now, simulate scanning with a delay
-  
-  // Simulate scanning delay (1-2 seconds)
-  await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 1000));
-  
-  // Simulate detection (15% chance of threat for demo)
-  const isThreat = Math.random() < 0.15;
-  
-  const engines = [
-    { name: 'url-reputation', detectionRate: 0.80 },
-    { name: 'phishing-db', detectionRate: 0.70 },
-    { name: 'malware-db', detectionRate: 0.60 },
-  ];
-  
-  const results = [];
-  
-  for (const engine of engines) {
-    const detected = isThreat && Math.random() < engine.detectionRate;
-    
-    results.push({
-      id: randomUUID(),
-      scanId: scanData.id,
-      engine: engine.name,
-      detected,
-      threatName: detected ? 'Phishing.Suspicious' : null,
-      severity: detected ? (Math.random() < 0.5 ? 'high' : 'low') : null,
-      details: {
-        engineVersion: '1.0.0',
-        scanDuration: Math.random() * 800 + 300,
-        categories: detected ? ['phishing', 'suspicious'] : [],
-        reputation: detected ? -50 : 85,
-      },
-      createdAt: new Date(),
-    });
+  if (!scanData.target) {
+    throw new Error('Missing target URL for scan');
   }
-  
-  // Determine overall result
-  const anyDetected = results.some(r => r.detected);
-  const overallResult = anyDetected ? 'infected' : 'clean';
-  const overallSeverity = anyDetected 
-    ? (results.find(r => r.detected)?.severity || 'medium')
-    : null;
-  
+
+  const url = scanData.target;
+  const engines = [runSafeBrowsing, runUrlScan, runVirusTotal, runPhishTank];
+  const engineResults: EngineResult[] = [];
+
+  for (const engine of engines) {
+    try {
+      engineResults.push(await engine(url));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      const engineName =
+        engine === runSafeBrowsing
+          ? 'google-safe-browsing'
+          : engine === runUrlScan
+          ? 'urlscan'
+          : engine === runVirusTotal
+          ? 'virustotal'
+          : 'phishtank';
+      engineResults.push({
+        engine: engineName,
+        detected: false,
+        threatName: null,
+        severity: null,
+        details: { error: message },
+      });
+    }
+  }
+
+  const overallResult = determineOverallResult(engineResults);
+  const overallSeverity = getHighestSeverity(engineResults);
+
   return {
     result: overallResult,
     severity: overallSeverity,
-    results,
+    results: engineResults.map((result) => ({
+      id: randomUUID(),
+      scanId: scanData.id,
+      engine: result.engine,
+      detected: result.detected,
+      threatName: result.threatName,
+      severity: result.severity,
+      details: result.details,
+      createdAt: new Date(),
+    })),
   };
 }
 
@@ -133,7 +136,7 @@ export async function processScan(scanId: string) {
   const scanData = scans[0];
   
   // Check if scan is already completed or failed
-  if (scanData.status === 'completed' || scanData.status === 'failed') {
+  if (scanData?.status === 'completed' || scanData?.status === 'failed') {
     return scanData;
   }
   
@@ -150,12 +153,12 @@ export async function processScan(scanId: string) {
     // Process based on scan type
     let processResult;
     
-    if (scanData.type === 'file') {
+    if (scanData?.type === 'file') {
       processResult = await processFileScan(scanData);
-    } else if (scanData.type === 'url') {
+    } else if (scanData?.type === 'url') {
       processResult = await processURLScan(scanData);
     } else {
-      throw new Error(`Unknown scan type: ${scanData.type}`);
+      throw new Error(`Unknown scan type: ${scanData?.type}`);
     }
     
     // Insert scan results
