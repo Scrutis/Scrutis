@@ -1,4 +1,4 @@
-import js from "@eslint/js"
+import js from "@eslint/js/src/index.js"
 import pluginNext from "@next/eslint-plugin-next"
 import eslintConfigPrettier from "eslint-config-prettier"
 import pluginReact from "eslint-plugin-react"
@@ -34,6 +34,7 @@ export const nextJsConfig = [
     rules: {
       ...pluginNext.configs.recommended.rules,
       ...pluginNext.configs["core-web-vitals"].rules,
+      "@typescript-eslint/no-explicit-any": "off",
     },
   },
   {
@@ -48,4 +49,4 @@ export const nextJsConfig = [
       "react/prop-types": "off",
     },
   },
-]
+];
