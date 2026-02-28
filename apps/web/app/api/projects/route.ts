@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@scrutis/db";
-import { project } from "@scrutis/db/src/schema";
+import { project } from "@scrutis/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 // GET /api/projects - List all projects for the authenticated user
 export async function GET(request: NextRequest) {

@@ -1,9 +1,9 @@
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
 import * as dotenv from 'dotenv';
-import * as schema from './schema';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import * as schema from './schema.js';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 // Load environment variables
 dotenv.config({ path: '.env' });
@@ -35,7 +35,7 @@ async function runMigrations() {
     
     for (const statement of statements) {
       if (statement.trim()) {
-        await sql(statement);
+        await sql.query(statement);
         console.log('✅ Executed migration statement');
       }
     }

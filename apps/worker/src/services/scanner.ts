@@ -1,7 +1,7 @@
 import { db } from '@scrutis/db';
-import { scan, scanResult } from '@scrutis/db/src/schema';
+import { scan, scanResult } from '@scrutis/db/schema';
 import { eq } from 'drizzle-orm';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import { stat } from 'node:fs/promises';
 import type { EngineResult } from './scanners/types.js';
 import { runClamAV, runYara } from './scanners/file/index.js';
@@ -12,10 +12,6 @@ import {
 } from './scanners/utils.js';
 import { runPhishTank, runSafeBrowsing, runUrlScan, runVirusTotal } from './scanners/url/index.js';
 
-/**
- * Process a file scan
- * TODO: Implement actual file scanning logic
- */
 async function processFileScan(scanData: typeof scan.$inferSelect) {
   const metadata = (scanData.metadata || {}) as { filePath?: string };
   if (!metadata.filePath) {

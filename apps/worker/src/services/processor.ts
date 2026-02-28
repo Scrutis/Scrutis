@@ -1,6 +1,6 @@
 import { db } from '@scrutis/db';
-import { scan } from '@scrutis/db/src/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { scan } from '@scrutis/db/schema';
+import { eq } from 'drizzle-orm';
 import { processScan } from './scanner.js';
 
 const POLL_INTERVAL = 5000; // Poll every 5 seconds
@@ -11,11 +11,11 @@ const BATCH_SIZE = 5; // Process up to 5 scans at a time
  */
 async function pollAndProcessScans() {
   try {
-    // Find pending or scanning scans (in case of worker restart)
+    // Find pending scans
     const pendingScans = await db
       .select()
       .from(scan)
-      .where(inArray(scan.status, ['pending', 'scanning']))
+      .where(eq(scan.status, 'pending'))
       .limit(BATCH_SIZE);
     
     if (pendingScans.length === 0) {

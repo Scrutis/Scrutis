@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@scrutis/db";
-import { scan } from "@scrutis/db/src/schema";
+import { scan } from "@scrutis/db/schema";
 import { eq, and, sql, inArray } from "drizzle-orm";
 
 // GET /api/stats - Get dashboard statistics for the authenticated user

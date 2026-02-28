@@ -8,7 +8,7 @@ import { scanRoutes } from './routes/scans.js';
 import { startScanProcessor } from './services/processor.js';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 // Middleware
 app.use(cors());

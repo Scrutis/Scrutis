@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@scrutis/db";
-import { scan, project } from "@scrutis/db/src/schema";
+import { scan, project } from "@scrutis/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
         .where(eq(project.id, projectId))
         .limit(1);
       
-      if (projectExists.length === 0 || projectExists[0].userId !== session.user.id) {
+      if (projectExists.length === 0 || projectExists[0]?.userId !== session.user.id) {
         return NextResponse.json(
           { error: "Project not found or access denied" },
           { status: 404 }

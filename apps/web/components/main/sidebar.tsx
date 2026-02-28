@@ -21,23 +21,23 @@ const data = {
   navMain: [
     {
       title: "Overview",
-      url: "#",
+      url: "/dashboard",
       icon: BarChart3,
       isActive: true,
     },
     {
       title: "File Scan",
-      url: "#",
+      url: "/file-scan",
       icon: ShieldCheck,
     },
     {
       title: "Url Scan",
-      url: "#",
+      url: "/dashboard",
       icon: Link2,
     },
     {
       title: "Reports",
-      url: "#",
+      url: "/dashboard",
       icon: FileCode,
     },
   ],

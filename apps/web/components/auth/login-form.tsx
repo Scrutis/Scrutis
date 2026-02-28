@@ -24,7 +24,7 @@ const signInFormSchema = z.object({
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   const [githubSignInPending, setGithubSignInPending] = useState(false);
-  const [emailSignInPending, setEmailSignInPending] = useState(false);
+  // const [emailSignInPending, setEmailSignInPending] = useState(false);
   const router = useRouter();
 
   const form = useForm<z.infer<typeof signInFormSchema>>({
@@ -44,14 +44,14 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       },
       {
         onSuccess: () => {
-          setEmailSignInPending(false);
+          // setEmailSignInPending(false);
           router.push("/dashboard");
         },
         onRequest: () => {
-          setEmailSignInPending(true);
+          // setEmailSignInPending(true);
         },
         onError: (error) => {
-          setEmailSignInPending(false);
+          // setEmailSignInPending(false);
           // toast("Error", {
           //   description: error.error.message,
           // });

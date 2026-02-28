@@ -14,6 +14,7 @@ type Scan = {
   status: string;
   severity: string | null;
   result: string | null;
+  projectId: string | null;
   fileHash: string | null;
   fileSize: number | null;
   metadata: any;
@@ -22,6 +23,12 @@ type Scan = {
   createdAt: string;
   updatedAt: string;
 }
+
+type Project = {
+  id: string;
+  name: string;
+  description: string | null;
+};
 
 type ScanResult = {
   id: string;
@@ -39,8 +46,12 @@ export default function ScanDetailPage() {
   const router = useRouter()
   const [scan, setScan] = useState<Scan | null>(null)
   const [results, setResults] = useState<ScanResult[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isSavingProject, setIsSavingProject] = useState(false)
+  const [projectError, setProjectError] = useState<string | null>(null)
 
   const fetchScan = useCallback(async (options?: { showLoading?: boolean; showRefresh?: boolean }) => {
     const { showLoading = false, showRefresh = false } = options || {};
@@ -53,6 +64,7 @@ export default function ScanDetailPage() {
         const data = await response.json()
         setScan(data.scan)
         setResults(data.results || [])
+        setSelectedProjectId(data.scan?.projectId || "")
       } else if (response.status === 404) {
         router.push('/dashboard')
       }
@@ -64,9 +76,22 @@ export default function ScanDetailPage() {
     }
   }, [params.id, router])
 
+  const fetchProjects = useCallback(async () => {
+    try {
+      const response = await fetch('/api/projects')
+      if (response.ok) {
+        const data = await response.json()
+        setProjects(data.projects || [])
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error)
+    }
+  }, [])
+
   useEffect(() => {
     if (params.id) {
       fetchScan({ showLoading: true })
+      fetchProjects()
       // Poll for updates if scan is still in progress
       const interval = setInterval(() => {
         if (scan && (scan.status === 'pending' || scan.status === 'scanning')) {
@@ -75,7 +100,38 @@ export default function ScanDetailPage() {
       }, 3000)
       return () => clearInterval(interval)
     }
-  }, [params.id, fetchScan, scan?.status])
+  }, [params.id, fetchScan, fetchProjects, scan?.status])
+
+  const handleProjectSave = async () => {
+    if (!scan) return
+    setIsSavingProject(true)
+    setProjectError(null)
+
+    try {
+      const response = await fetch(`/api/scans/${scan.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          projectId: selectedProjectId || null,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to update project')
+      }
+
+      const data = await response.json()
+      setScan(data.scan)
+    } catch (error) {
+      console.error('Error updating project:', error)
+      setProjectError(error instanceof Error ? error.message : 'Failed to update project')
+    } finally {
+      setIsSavingProject(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -274,6 +330,51 @@ export default function ScanDetailPage() {
                     </div>
                   </div>
                 )}
+                <div className="rounded-lg border border-slate-200/60 bg-white/70 p-4 dark:border-slate-800/70 dark:bg-slate-900/40 md:col-span-2">
+                  <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Project</p>
+                  {projectError && (
+                    <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                      {projectError}
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <select
+                      value={selectedProjectId}
+                      onChange={(e) => setSelectedProjectId(e.target.value)}
+                      disabled={isSavingProject}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">No Project</option>
+                      {projects.length === 0 ? (
+                        <option value="" disabled>
+                          No projects available
+                        </option>
+                      ) : (
+                        projects.map((project) => (
+                          <option key={project.id} value={project.id}>
+                            {project.name}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleProjectSave}
+                      disabled={isSavingProject || (scan.projectId || "") === selectedProjectId}
+                    >
+                      {isSavingProject ? (
+                        <>
+                          <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                          Saving
+                        </>
+                      ) : (
+                        'Save'
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
               {scan.errorMessage && (
                 <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">

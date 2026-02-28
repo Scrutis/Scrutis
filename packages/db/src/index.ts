@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/neon-http';
 import * as dotenv from 'dotenv';
-import { resolve } from 'path';
-import * as schema from './schema';
+import { resolve } from 'node:path';
+import * as schema from './schema.js';
 
 // Try to load environment variables from multiple possible locations
 // This ensures DATABASE_URL is available regardless of where the package is imported from
@@ -36,13 +36,23 @@ if (!process.env.DATABASE_URL) {
 
 const databaseUrl = process.env.DATABASE_URL;
 
-if (!databaseUrl) {
-  throw new Error(
-    'DATABASE_URL is not set. Please set it in your .env file or environment variables.\n' +
-    'Expected locations: packages/db/.env, apps/worker/.env, or apps/web/.env'
-  );
-}
+const missingDatabaseUrlMessage =
+  'DATABASE_URL is not set. Please set it in your .env file or environment variables.\n' +
+  'Expected locations: packages/db/.env, apps/worker/.env, or apps/web/.env';
 
-export const db = drizzle(databaseUrl, { schema });
+export const db = (() => {
+  if (!databaseUrl) {
+    return new Proxy(
+      {},
+      {
+        get() {
+          throw new Error(missingDatabaseUrlMessage);
+        },
+      }
+    ) as ReturnType<typeof drizzle>;
+  }
 
-export * from './schema';
+  return drizzle(databaseUrl, { schema });
+})();
+
+export * from './schema.js';

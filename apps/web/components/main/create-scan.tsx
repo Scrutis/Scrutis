@@ -28,6 +28,10 @@ export const CreateScan = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectDescription, setNewProjectDescription] = useState("");
+  const [projectError, setProjectError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [urlError, setUrlError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -51,6 +55,49 @@ export const CreateScan = () => {
       console.error('Error fetching projects:', error);
     } finally {
       setIsLoadingProjects(false);
+    }
+  };
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) {
+      setProjectError('Project name is required.');
+      return;
+    }
+
+    setIsCreatingProject(true);
+    setProjectError(null);
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newProjectName.trim(),
+          description: newProjectDescription.trim() || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create project');
+      }
+
+      const data = await response.json();
+      const createdProject = data.project as Project | undefined;
+
+      if (createdProject) {
+        setProjects((prev) => [createdProject, ...prev]);
+        setSelectedProjectId(createdProject.id);
+        setNewProjectName("");
+        setNewProjectDescription("");
+      }
+    } catch (error) {
+      console.error('Error creating project:', error);
+      setProjectError(error instanceof Error ? error.message : 'Failed to create project');
+    } finally {
+      setIsCreatingProject(false);
     }
   };
 
@@ -134,7 +181,7 @@ export const CreateScan = () => {
           body: JSON.stringify({
             type: 'url',
             target: url,
-            projectId: selectedProjectId || null,
+            projectId: selectedProjectId === "__new__" ? null : selectedProjectId || null,
           }),
         });
 
@@ -189,7 +236,7 @@ export const CreateScan = () => {
           body: JSON.stringify({
             type: 'file',
             target: selectedFile.name,
-            projectId: selectedProjectId || null,
+            projectId: selectedProjectId === "__new__" ? null : selectedProjectId || null,
             fileHash: uploadData.fileHash,
             fileSize: uploadData.fileSize,
             metadata: {
@@ -228,10 +275,86 @@ export const CreateScan = () => {
     setUrl('');
     setFile(null);
     setSelectedProjectId("");
+    setNewProjectName("");
+    setNewProjectDescription("");
+    setProjectError(null);
     setFormError(null);
     setUrlError(null);
     setFileError(null);
   };
+
+  const renderProjectSection = (selectId: string) => (
+    <div className="grid gap-2">
+      <Label htmlFor={selectId} className="text-left">
+        Project (Optional)
+      </Label>
+      <select
+        id={selectId}
+        value={selectedProjectId}
+        onChange={(e) => setSelectedProjectId(e.target.value)}
+        disabled={isLoading || isLoadingProjects || isCreatingProject}
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <option value="">No Project</option>
+        {isLoadingProjects && (
+          <option value="" disabled>
+            Loading projects...
+          </option>
+        )}
+        {projects.map((project) => (
+          <option key={project.id} value={project.id}>
+            {project.name}
+          </option>
+        ))}
+        {projects.length > 0 && !isLoadingProjects && (
+          <option value="__new__">+ Create new project</option>
+        )}
+      </select>
+      {(projects.length === 0 || selectedProjectId === "__new__") && !isLoadingProjects && (
+        <div className="rounded-lg border border-dashed border-slate-200/70 bg-white/60 p-3 text-sm text-slate-600 dark:border-slate-800/70 dark:bg-slate-900/40 dark:text-slate-300">
+          <div className="mb-2 font-medium text-slate-900 dark:text-white">
+            {projects.length === 0 ? 'No projects yet' : 'Create new project'}
+          </div>
+          {projectError && (
+            <div className="mb-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {projectError}
+            </div>
+          )}
+          <div className="grid gap-2">
+            <Input
+              id={`${selectId}-new-name`}
+              placeholder="Project name"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              disabled={isLoading || isCreatingProject}
+            />
+            <Input
+              id={`${selectId}-new-description`}
+              placeholder="Description (optional)"
+              value={newProjectDescription}
+              onChange={(e) => setNewProjectDescription(e.target.value)}
+              disabled={isLoading || isCreatingProject}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCreateProject}
+              disabled={isLoading || isCreatingProject}
+            >
+              {isCreatingProject ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create project'
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   const stepIndex = step === 'type' ? 1 : step === 'details' ? 2 : 3;
   const stepProgress = (stepIndex / 3) * 100;
@@ -334,30 +457,7 @@ export const CreateScan = () => {
                     </p>
                   )}
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="project-url" className="text-left">
-                    Project (Optional)
-                  </Label>
-                  <select
-                    id="project-url"
-                    value={selectedProjectId}
-                    onChange={(e) => setSelectedProjectId(e.target.value)}
-                    disabled={isLoading || isLoadingProjects}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">No Project</option>
-                    {isLoadingProjects && (
-                      <option value="" disabled>
-                        Loading projects...
-                      </option>
-                    )}
-                    {projects.map((project) => (
-                      <option key={project.id} value={project.id}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {renderProjectSection('project-url')}
               </div>
             )}
             {step === 'details' && scanType === 'file' && (
@@ -386,30 +486,7 @@ export const CreateScan = () => {
                     </p>
                   )}
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="project-file" className="text-left">
-                    Project (Optional)
-                  </Label>
-                  <select
-                    id="project-file"
-                    value={selectedProjectId}
-                    onChange={(e) => setSelectedProjectId(e.target.value)}
-                    disabled={isLoading || isLoadingProjects}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">No Project</option>
-                    {isLoadingProjects && (
-                      <option value="" disabled>
-                        Loading projects...
-                      </option>
-                    )}
-                    {projects.map((project) => (
-                      <option key={project.id} value={project.id}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {renderProjectSection('project-file')}
               </div>
             )}
             {step === 'review' && (
