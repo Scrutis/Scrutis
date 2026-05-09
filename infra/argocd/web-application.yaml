@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: scrutis-web
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/Scrutis/Scrutis.git
+    targetRevision: main
+    path: infra/helm/web
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: scrutis
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
