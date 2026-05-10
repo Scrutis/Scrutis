@@ -31,3 +31,6 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
 
+          envFrom:
+            {{- toYaml .Values.envFrom | nindent 12 }}
+

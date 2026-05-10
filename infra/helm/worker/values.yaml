@@ -12,3 +12,10 @@ service:
 env:
   PORT: 3001
 
+envFrom:
+  - secretRef:
+      name: better-auth-secret
+  - secretRef:
+      name: db-secret
+  - secretRef:
+      name: github-secret
