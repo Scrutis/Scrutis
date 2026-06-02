@@ -1,7 +1,7 @@
 replicaCount: 1
 image:
   repository: arcayth/scrutis-worker
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   tag: "latest"
 
 service:
