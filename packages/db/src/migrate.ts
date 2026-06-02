@@ -1,9 +1,7 @@
-import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
 import * as dotenv from 'dotenv';
-import * as schema from './schema.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import pg from 'pg';
 
 // Load environment variables
 dotenv.config({ path: '.env' });
@@ -14,8 +12,9 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL is not set in packages/db/.env');
 }
 
-const sql = neon(databaseUrl);
-const db = drizzle(sql, { schema });
+const pool = new pg.Pool({
+  connectionString: databaseUrl,
+});
 
 async function runMigrations() {
   try {
@@ -35,25 +34,25 @@ async function runMigrations() {
     
     for (const statement of statements) {
       if (statement.trim()) {
-        await sql.query(statement);
+        await pool.query(statement);
         console.log('✅ Executed migration statement');
       }
     }
     
     // Check if we need to add the missing tables (scan, scan_result, project)
     // These might not be in the migration file yet
-    const checkTables = await sql`
-      SELECT table_name 
+    const checkTables = await pool.query(`
+      SELECT table_name
       FROM information_schema.tables 
       WHERE table_schema = 'public' 
       AND table_name IN ('scan', 'scan_result', 'project')
-    `;
+    `);
     
-    const existingTables = checkTables.map((row: any) => row.table_name);
+    const existingTables = checkTables.rows.map((row: any) => row.table_name);
     
     if (!existingTables.includes('project')) {
       console.log('📦 Creating project table...');
-      await sql`
+      await pool.query(`
         CREATE TABLE "project" (
           "id" text PRIMARY KEY NOT NULL,
           "name" text NOT NULL,
@@ -62,16 +61,16 @@ async function runMigrations() {
           "created_at" timestamp DEFAULT now() NOT NULL,
           "updated_at" timestamp DEFAULT now() NOT NULL
         );
-      `;
-      await sql`
+      `);
+      await pool.query(`
         ALTER TABLE "project" ADD CONSTRAINT "project_user_id_user_id_fk" 
         FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
-      `;
+      `);
     }
     
     if (!existingTables.includes('scan')) {
       console.log('📦 Creating scan table...');
-      await sql`
+      await pool.query(`
         CREATE TABLE "scan" (
           "id" text PRIMARY KEY NOT NULL,
           "project_id" text,
@@ -89,20 +88,20 @@ async function runMigrations() {
           "created_at" timestamp DEFAULT now() NOT NULL,
           "updated_at" timestamp DEFAULT now() NOT NULL
         );
-      `;
-      await sql`
+      `);
+      await pool.query(`
         ALTER TABLE "scan" ADD CONSTRAINT "scan_project_id_project_id_fk" 
         FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE set null ON UPDATE no action;
-      `;
-      await sql`
+      `);
+      await pool.query(`
         ALTER TABLE "scan" ADD CONSTRAINT "scan_user_id_user_id_fk" 
         FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
-      `;
+      `);
     }
     
     if (!existingTables.includes('scan_result')) {
       console.log('📦 Creating scan_result table...');
-      await sql`
+      await pool.query(`
         CREATE TABLE "scan_result" (
           "id" text PRIMARY KEY NOT NULL,
           "scan_id" text NOT NULL,
@@ -113,17 +112,19 @@ async function runMigrations() {
           "details" jsonb,
           "created_at" timestamp DEFAULT now() NOT NULL
         );
-      `;
-      await sql`
+      `);
+      await pool.query(`
         ALTER TABLE "scan_result" ADD CONSTRAINT "scan_result_scan_id_scan_id_fk" 
         FOREIGN KEY ("scan_id") REFERENCES "public"."scan"("id") ON DELETE cascade ON UPDATE no action;
-      `;
+      `);
     }
     
     console.log('✅ Database migrations completed successfully!');
+    await pool.end();
     process.exit(0);
   } catch (error) {
     console.error('❌ Error running migrations:', error);
+    await pool.end();
     process.exit(1);
   }
 }

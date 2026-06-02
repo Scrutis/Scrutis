@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'infra/helm/**'
+
+permissions:
+  contents: write
 
 jobs:
   deploy:
@@ -56,24 +61,3 @@ jobs:
           push: true
           tags: ${{ steps.meta-worker.outputs.tags }}
           labels: ${{ steps.meta-worker.outputs.labels }}
-
-      - name: Update Helm image tag
-        env:
-          WEB_TAG: ${{ steps.meta-web.outputs.version }}
-          WORKER_TAG: ${{ steps.meta-worker.outputs.version }}
-        run: |
-          yq -i '.image.tag = strenv(WEB_TAG)' infra/helm/web/values.yaml
-          yq -i '.image.tag = strenv(WORKER_TAG)' infra/helm/worker/values.yaml
-
-      - name: Commit Helm changes
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-          git add infra/helm/web/values.yaml
-          git add infra/helm/worker/values.yaml
-
-          git diff --cached --quiet || \
-            git commit -m "chore(deploy): update web image to ${{ steps.meta-web.outputs.version }}"
-
-          git push

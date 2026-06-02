@@ -1,6 +1,7 @@
-import { drizzle } from 'drizzle-orm/neon-http';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as dotenv from 'dotenv';
 import { resolve } from 'node:path';
+import pg from 'pg';
 import * as schema from './schema.js';
 
 // Try to load environment variables from multiple possible locations
@@ -40,6 +41,14 @@ const missingDatabaseUrlMessage =
   'DATABASE_URL is not set. Please set it in your .env file or environment variables.\n' +
   'Expected locations: packages/db/.env, apps/worker/.env, or apps/web/.env';
 
+const createDbClient = (connectionString: string) => {
+  const pool = new pg.Pool({
+    connectionString,
+  });
+
+  return drizzle(pool, { schema });
+};
+
 export const db = (() => {
   if (!databaseUrl) {
     return new Proxy(
@@ -52,7 +61,7 @@ export const db = (() => {
     ) as ReturnType<typeof drizzle>;
   }
 
-  return drizzle(databaseUrl, { schema });
+  return createDbClient(databaseUrl);
 })();
 
 export * from './schema.js';
